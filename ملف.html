@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ملف تحقيق</title>
+<link rel="icon" type="image/png" href="https://i.postimg.cc/28B0910P/snapedit-1754626983902.png">
+
+<style>
+  body {
+    background-color: #0b132b;
+    color: #fff;
+    font-family: "Cairo", sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+    min-height: 100vh !important;
+    overflow-y: auto !important;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0%;
+    left: -4%;
+    width: 100%;
+    height: 100%;
+    background: url('https://i.postimg.cc/MTrPcVG2/image.gif') no-repeat;
+    background-size: 50%;
+    background-position: left top;
+    opacity: 0.08;
+    z-index: 0;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    right: -4%;
+    width: 100%;
+    height: 100%;
+    background: url('https://i.postimg.cc/qMmRN7ss/final-3.gif') no-repeat;
+    background-size: 50%;
+    background-position: right top;
+    opacity: 0.08;
+    z-index: 0;
+  }
+
+  .container {
+    background: #1c2541;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 15px rgba(255,255,255,0.1);
+    width: 380px;
+    position: relative;
+    z-index: 1;
+    max-height: 90vh;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeIn 0.9s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h2 {
+    color: #5bc0be;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    margin-top: 15px;
+    font-weight: bold;
+    text-align: right;
+  }
+
+  input, select {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 5px;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background: #3a506b;
+    color: white;
+    font-family: "Cairo", sans-serif;
+    text-align: center;
+    transition: 0.3s ease;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: #5bc0be;
+    box-shadow: 0 0 10px #5bc0be80;
+  }
+
+  .dropdown { position: relative; }
+
+  .suggestions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    width: 100%;
+    background: #1c2541;
+    border-radius: 10px;
+    border: 1px solid #5bc0be40;
+    margin-top: 5px;
+    max-height: 160px;
+    overflow-y: auto;
+    z-index: 10;
+  }
+
+  .suggestions.active { display: block; }
+
+  .group-title {
+    color: #5bc0be;
+    font-weight: bold;
+    padding: 6px 10px;
+    border-bottom: 1px solid #5bc0be40;
+    background: #243b55;
+  }
+
+  .suggestion {
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    text-align: right;
+  }
+
+  .suggestion:hover {
+    background: #5bc0be;
+    color: #000;
+  }
+
+  .inline-fields {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .plus-sign {
+    font-weight: bold;
+    color: #5bc0be;
+  }
+
+  button {
+    width: 100%;
+    background: #5bc0be;
+    color: #000;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    margin-top: 15px;
+  }
+
+  button:hover {
+    background: #a1dfd5;
+    transform: scale(1.03);
+  }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #1c2541; }
+  ::-webkit-scrollbar-thumb { background: #5bc0be; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #a1dfd5; }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>ملف تحقيق</h2>
+
+  <label>رقم ملف التحقيق:</label>
+  <input type="text" id="caseNumber">
+
+  <label>ايدي المحقق:</label>
+  <input type="text" id="investigatorId">
+
+  <label>ايدي العسكري:</label>
+  <input type="text" id="soldierId">
+
+  <label>العسكري:</label>
+  <select id="soldierType">
+    <option value="فرد">فرد</option>
+    <option value="ضابط">ضابط</option>
+  </select>
+
+  <label>التهمة الموجهة:</label>
+  <div class="dropdown">
+    <input type="text" id="accuseInput" placeholder="ابحث أو اكتب التهمة">
+    <div class="suggestions" id="suggestions"></div>
+  </div>
+
+  <label>هل تم حضور الاستدعاء؟</label>
+  <select id="attend">
+    <option value="نعم">نعم</option>
+    <option value="لا">لا</option>
+  </select>
+
+  <label>هل سبق وحصل على إنذار وظيفي؟</label>
+  <select id="hasWarning">
+    <option value="لا">لا</option>
+    <option value="نعم">نعم</option>
+  </select>
+
+  <label>الحكم الأنسب:</label>
+  <div class="inline-fields">
+    <input type="text" id="warningType" placeholder="إنذار شفهي / وظيفي" list="warningList">
+    <datalist id="warningList">
+      <option value="إنذار شفهي أول">
+      <option value="إنذار شفهي ثاني">
+      <option value="إنذار شفهي أخير">
+      <option value="إنذار وظيفي أول">
+      <option value="إنذار وظيفي ثاني">
+      <option value="إنذار وظيفي ثالث">
+    </datalist>
+
+    <span class="plus-sign">+</span>
+
+    <input type="text" id="fineValue" placeholder="القيمة" style="max-width:110px;">
+    <select id="fineUnit" style="max-width:110px;">
+      <option value="ألف">ألف</option>
+      <option value="مليون">مليون</option>
+    </select>
+  </div>
+
+  <label>دليل القضية:</label>
+  <select id="proof">
+    <option value="ميداني">ميداني</option>
+    <option value="فيديو">فيديو</option>
+    <option value="صورة">صورة</option>
+  </select>
+
+  <button onclick="generateMessage()">📋 نسخ ملف التحقيق</button>
+</div>
+
+<script>
+
+const reasons = {
+  "بنود الدرجة الأولى": [
+ "استيقاف مروري أو التصدي للمجرمين بشكل خاطئ",
+ "مخالفة قوانين نقاط التفتيش",
+ "إبقاء المجرم في الدورية والتوجه لحالات أخرى",
+ "مخالفة قوانين الميدان بشكل عام",
+ "مخالفة قوانين المشتركة",
+ "عدم تسليم الممنوعات",
+ "عدم تغيير المسمى الميداني",
+ "مخالفة قوانين الغفوة",
+ "دخول الحرم العسكري بالمركبة الشخصية",
+ "التفاعل مع برقية رسمية",
+ "إعطاء مخالفات غير مستحقة",
+ "عدم مباشرة الميدان",
+  ],
+  "بنود الدرجة الثانية": [
+  "تخطي المراجع",
+ "التغيب عن الموجة",
+ "عدم التجاوب أو إهمال التوجيهات في الراديو",
+ "عدم الإلتزام بالعهدة العسكرية",
+ "الصعود للفرود بشكل مخالف",
+ "عدم الالتزام بالمظهر العسكري",
+ "عدم الالتزام بالأنظمة المرورية",
+ "وضع حواجز أو كشك بدون إذن",
+ "تكرار طلب رتبة عالية بلا مبرر",
+ "مخالفة قوانين تسجيل الدخول والخروج",
+ "استخدام المنشن بشكل خاطئ",
+ "التأخر عن الاصطفاف",
+ "رفع السلاح في غير الحالات الجنائية",
+ "عدم الإلتزام ببروتوكولات الراديو",
+ "سوء التعامل مع الحالات",
+ "عدم الالتزام بالقيافة العسكرية",
+  ],
+  "بنود الدرجة الثالثة": [
+  "عدم التقيد بقواعد المطاردات",
+ "مخالفة قوانين الإعتقال أو التعامل مع المتهمين",
+ "التهاون مع مجرم",
+ "الانسحاب قبل انتهاء الحالة",
+ "مخالفة قوانين التوجه إلى الحالات",
+ "مخالفة تعاميم أو قوانين الأمن العام المحدثة",
+ "دخول موجّه الرقابة دون إذن أعلى رتبة في الميدان",
+ "التهرب من إستلام مهام مركز العمليات",
+ "مخالفة قوانين العمليات",
+ "التدخل في مهمات أو صلاحيات الغير بأي شكل من الأشكال",
+ "تسجيل دخول لمباشرة حالة ثم تسجيل خروجه",
+ "إضافة شروط هروب غير محددة ضمن التعميمات",
+ "إطلاق النار بطريقة غير نظامية",
+ "تحرير الرهائن بدون إذن أو الفشل في تحريرها",
+ "مخالفة قوانين المركبات",
+ "مخالفة قوانين السجن | سجن غير صحيح",
+ "كشف هوية البحث الجنائي",
+ "الانسحاب من موقع التوجيه بدون إذن",
+ "عدم الإلتزام بضوابط التفاوض",
+ "عدم احترام مدرب الدورة",
+ "إعطاء أمر مخالف",
+ "استخدام التيزر بشكل مخالف",
+ "استعمال المركبة كسلاح",
+ "إسقاط أعزل",
+ "عدم احترام الأفراد فيما بينهم",
+ "مخالفة قوانين السجلات الجنائية",
+ "استعمال سلاح غير مخصص للحالة",
+ "عدم الالتزام بضوابط السيناريوهات",
+ "مخالفة قوانين الدورات",
+ "مخالفة قوانين الإجازة الداخلية",
+ "التهرب من التوجه إلى المنارة",
+  ],
+  "بنود الدرجة الرابعة": [
+   "العبث بالعهدة العسكرية",
+ "التقصير في العمل الإداري أو الميداني",
+ "عدم الالتزام بالزي العسكري المحدد لرتبتك",
+ "عدم الجدية أثناء الدوام كعسكري",
+ "استخدام السلطة بغير حق",
+ "إهمال الرتب العليا للميدان",
+ "الإساءة للشرطة العسكرية بأي شكل",
+ "حيازة سلاح غير مصرح له",
+ "تعاطي الممنوعات",
+ "عدم تقدير الحياة",
+ "مجادلة ضابط",
+ "مخالفة قوانين المصادرة سواء بالأخذ أو التخزين",
+ "التعامل مع حالة دون تصريح مباشر من مستلم الحالة",
+ "تخريب سيناريو",
+  ],
+  "بنود الدرجة الخامسة": [
+   "المناقشة أمام الأفراد",
+ "الكذب على المسؤولين",
+ "استخدام السلطة أو الوظيفة للمصلحة الشخصية",
+ "مخالفة أمر مباشر أو عدم الانصياع للأوامر",
+ "مباشرة الميدان دون كسر إجازة داخلية أو خارجية",
+ "التلفظ على مواطن أو الإساءة له بأي شكل",
+ "استعمال السنايبر بشكل غير نظامي",
+ "عدم احترام ضابط",
+  ],
+  "بنود الدرجة السادسة": [
+   "الترصد لزملائك بدافع الحقد",
+ "عدم احترام الرتب العليا",
+ "التخريب برتبة عسكرية",
+ "الإساءة للأمن العام داخل أو خارج الرول بلاي",
+ "تسريب معلومات أو نسخ جداول الأمن العام",
+ "فساد عسكري",
+ "عدم تمثيل العسكري بصورة صحيحة",
+  ],
+ "بنود الدرجة السابعة": [
+ "عدم تنفيذ الجزاء الصادر بحقك",
+ "عدم التواجد لفترة طويلة",
+ "عدم الانصياع لأوامر القادة",
+ "التهرب الوظيفي",
+ "عدم تسديد الغرامات لأكثر من أسبوعين",
+ "التستر على أمر مخالف بأي شكل"
+  ],
+  "المخالفات الثابتة": [
+    "الاعتراض على حكم صحيح",
+ "عدم تسجيل الدخول في الخدمة",
+ "عدم الالتزام بنموذج الفصل أثناء السيناريو",
+ "إهمال المركبة",
+ "مخالفة قوانين رسائل الأمن العام",
+ "التعرض للسجن الرقابي أثناء الإجازة",
+ "عدم مطابقة المسمى في فايف إم للأفراد",
+ "عدم مطابقة المسمى في فايف إم للضباط",
+  ]
+};
+
+
+const accuseInput = document.getElementById("accuseInput");
+const suggestionsBox = document.getElementById("suggestions");
+
+accuseInput.addEventListener("focus", () => {
+  renderSuggestions("");
+  suggestionsBox.classList.add("active");
+});
+
+accuseInput.addEventListener("input", () => {
+  renderSuggestions(accuseInput.value.trim());
+});
+
+function renderSuggestions(q) {
+  suggestionsBox.innerHTML = "";
+  const query = (q || "").toLowerCase();
+  let found = false;
+
+  for (const group in reasons) {
+    const arr = reasons[group].filter(r => r.toLowerCase().includes(query));
+    if (arr.length) {
+      found = true;
+      suggestionsBox.innerHTML += `<div class="group-title">${group}</div>`;
+      arr.forEach(text => {
+        suggestionsBox.innerHTML += `<div class="suggestion" onclick="selectAccuse('${text}')">${text}</div>`;
+      });
+    }
+  }
+
+  suggestionsBox.classList.toggle("active", found);
+}
+
+function selectAccuse(text) {
+  accuseInput.value = text;
+  suggestionsBox.classList.remove("active");
+}
+
+document.addEventListener("click", (e) => {
+  if (!document.querySelector(".dropdown").contains(e.target)) {
+    suggestionsBox.classList.remove("active");
+  }
+});
+
+function copyFinal(text) {
+  navigator.clipboard.writeText(text).catch(() => {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    ta.remove();
+  });
+}
+
+function generateMessage() {
+
+  const num       = document.getElementById("caseNumber").value;
+  const inv       = document.getElementById("investigatorId").value;
+  const sol       = document.getElementById("soldierId").value;
+  const acc       = document.getElementById("accuseInput").value;
+  const att       = document.getElementById("attend").value;
+  const hasWarn   = document.getElementById("hasWarning").value;
+  const proofType = document.getElementById("proof").value;
+  const type      = document.getElementById("soldierType").value;
+
+  const warn      = document.getElementById("warningType").value.trim();
+  const fineVal   = document.getElementById("fineValue").value.trim();
+  const fineUnit  = document.getElementById("fineUnit").value;
+
+  let delayText = "";
+  if (warn.includes("وظيفي")) {
+    if (type === "فرد") {
+      if (warn.includes("ثاني")) delayText = " + تأخير ترقية 7 أيام";
+      if (warn.includes("ثالث")) delayText = " + تأخير ترقية 14 يوم";
+    } else {
+      if (warn.includes("أول"))  delayText = " + تأخير ترقية 7 أيام";
+      if (warn.includes("ثاني")) delayText = " + تأخير ترقية 14 يوم";
+      if (warn.includes("ثالث")) delayText = " + تأخير ترقية 21 يوم";
+    }
+  }
+
+  const parts = [];
+  if (warn) parts.push(warn);
+  if (fineVal) parts.push(`غرامة ${fineVal} ${fineUnit}`);
+  if (delayText) parts.push(delayText.replace(/^ \+ */, ""));
+
+  const finalJudgment = parts.length ? parts.join(" + ") : "غير محدد";
+
+  const msg =
+`** الموضوع : فتح ملف تحقيق رقم : ${num}**
+
+** المحقق : <@${inv}> **  
+
+** على العسكري المذكور : <@${sol}> **
+
+** التهمة الموجهة اليه : ${acc} **
+
+** هل تم حضور الاستدعاء : ${att} **
+
+** اثناء التحقيق مع العسكري هل اتضح انه مذنب : نعم **
+
+** هل سبق وحصل العسكري على انذار وظيفي : ${hasWarn} **
+
+** الحكم الأنسب : ${finalJudgment} **
+
+** في الختام نرجو من مجلس القضاء العسكري النظر في القضية واعطاء الحكم المناسب **
+
+** دليل القضية : ${proofType} **`;
+
+  copyFinal(msg);
+}
+
+</script>
+
+</body>
+</html>
+
+
