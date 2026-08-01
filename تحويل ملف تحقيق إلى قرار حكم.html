@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>تحويل ملف تحقيق إلى قرار حكم</title>
+<style>
+  body{margin:0;background:#0b132b;font-family:Tahoma,Arial;color:#fff;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:18px}
+  .wrap{width:900px;background:#1c2541;border-radius:14px;padding:18px;box-shadow:0 20px 45px rgba(0,0,0,.45)}
+  .title{text-align:center;color:#5bc0be;font-weight:700;font-size:20px;margin-bottom:12px}
+  .card{background:rgba(11,19,43,.35);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:12px}
+  label{display:block;font-size:13px;opacity:.9;margin-bottom:8px}
+  textarea{width:100%;height:210px;border:none;border-radius:10px;padding:12px;font-size:14px;outline:none;resize:none;background:#fff;color:#000;box-sizing:border-box}
+  .actions{display:flex;gap:10px}
+  button{flex:1;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer}
+  .btn-main{background:#5bc0be;color:#002b2a}
+  .btn-sec{background:#0b132b;color:#fff;border:1px solid rgba(255,255,255,.12)}
+  pre{margin:0;background:#0b132b;border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:14px;white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.85;min-height:260px}
+  .hint{font-size:12px;opacity:.75;line-height:1.7;margin-top:8px}
+  @media (max-width:980px){.wrap{width:100%}.actions{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="title">نظام تحويل ملف تحقيق إلى قرار حكم</div>
+
+  <div class="card">
+    <label>الصق ملف التحقيق هنا (وبيتم تحويله الى قرار حكم )</label>
+    <textarea id="input" placeholder="الصق هنا..."></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="btn-main" onclick="generate()">توليد القرار</button>
+    <button class="btn-sec" onclick="copyOut()">نسخ القرار</button>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <label>قرار الحكم (جاهز للانزال)</label>
+    <pre id="output"></pre>
+    <div class="hint">ملاحظة: الإخراج يُعرض بـ textContent عشان المنشنات <@...> ما تنكسر.</div>
+  </div>
+</div>
+
+<script>
+function generate(){
+  const raw = (document.getElementById("input").value || "").replace(/\r/g,"");
+  const out = document.getElementById("output");
+
+  // تنظيف بسيط: يشيل النجوم ** من بداية/نهاية السطر فقط (بدون ما يغير المحتوى)
+  const lines = raw.split("\n").map(l => l.trim());
+  const normLines = lines.map(l => l.replace(/^\*+\s*/,"").replace(/\s*\*+$/,"").trim());
+
+  // دالة استخراج "مرنة" تدعم:
+  // ** التهمة الموجهة اليه : ... **
+  // التهمة الموجهة اليه : ...
+  // مع اختلافات بسيطة في المسافات/النقطتين
+  const getField = (labels) => {
+    const labelAlt = labels.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    const re = new RegExp("^\\s*(?:" + labelAlt + ")\\s*[:：]\\s*(.+?)\\s*$", "i");
+    for (const l of normLines){
+      const m = l.match(re);
+      if (m && m[1]) return m[1].trim();
+    }
+    return "";
+  };
+
+  // رقم الملف من سطر "فتح ملف تحقيق رقم : 9530" حتى لو كانت بصيغة "الموضوع : فتح ملف تحقيق رقم : 9530"
+  const getFileNo = () => {
+    const re = /فتح\s*ملف\s*تحقيق\s*رقم\s*[:：]\s*(\d+)/i;
+    for (const l of normLines){
+      const m = l.match(re);
+      if (m && m[1]) return m[1].trim();
+    }
+    return "";
+  };
+
+  const fileNo   = getFileNo() || "0000";
+  const accused  = getField(["على العسكري المذكور","على العسكري المذكور أدناه"]) || "<@xxxxxx>";
+  const reason   = getField(["التهمة الموجهة اليه","التهمة الموجهة إليه","التهمة"]) || "غير محدد";
+  const judgment = getField(["الحكم الأنسب","الحكم"]) || "غير محدد";
+
+  // ✅ القالب النهائي: مطابق للي طلبته (نفس النجوم/البكتيك/المسافات والأسطر)
+  // ملاحظة: لا نستخدم innerHTML أبدًا
+  const decision =
+`**﷽**
+
+**  قرار حكم صادر من :**
+
+<@&1071933312588857395>  
+
+**وبناء على ماورد في ملف التحقيق ${fileNo}  **
+
+** على العسكري المذكور أدناه :**
+
+${accused}
+
+ ** وبعد ماتم مناقشته مع المجلس العسكري والقُضاه فقد تقرر على المُدين اعلاه بالحكم**
+ 
+**الحكم :**
+
+** \`${judgment}\`  **
+ 
+**السبب :**
+
+** \`${reason}\`  **
+
+**ترسل نسخة لـ** <@&1071933319362654329> 
+
+**رئاسة الشرطة العسكرية  ** 
+
+<@775653582779318283> 
+
+<@1265729094902087783>        
+
+<@&1071933293865480192> 
+
+<@1098355352514330765> 
+
+<@&1071933294473662505> 
+
+<@697432773639536661>`;
+
+  out.textContent = decision;
+}
+
+function copyOut(){
+  const out = document.getElementById("output");
+  const text = out.textContent || "";
+  if(!text){
+    generate();
+  }
+  const finalText = document.getElementById("output").textContent;
+
+  // نسخ قوي حتى لو file://
+  const fallback = () => {
+    const ta = document.createElement("textarea");
+    ta.value = finalText;
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    ta.style.left = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try{
+      document.execCommand("copy");
+      alert("تم النسخ ✅");
+    }catch{
+      alert("تعذر النسخ — انسخه يدويًا من الصندوق.");
+    }
+    document.body.removeChild(ta);
+  };
+
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(finalText).then(
+      ()=> alert("تم النسخ ✅"),
+      ()=> fallback()
+    );
+  }else{
+    fallback();
+  }
+}
+
+// توليد أولي
+generate();
+</script>
+
+</body>
+</html>
